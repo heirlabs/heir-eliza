@@ -1,0 +1,30 @@
+---
+description: Polyrepo discipline — no cross-repo imports; coordinate changes across GitHub repos
+globs: "**/*"
+alwaysApply: true
+---
+
+# Polyrepo discipline (HEIR)
+
+## STOP — identify the repo first
+
+Run `git remote -v` and `git branch --show-current` before editing. You are in **one** of:
+
+| Directory / remote | GitHub |
+|--------------------|--------|
+| `heirlabs/web` (workspace) | <https://github.com/heirlabs/web> |
+| `heirlabs/heir-front` | <https://github.com/heirlabs/heir-front> |
+| `heirlabs/heir-back` | <https://github.com/heirlabs/heir-back> |
+| `heirlabs/heir-mcp` | <https://github.com/heirlabs/heir-mcp> |
+| `heirlabs/heir-integrations` | <https://github.com/heirlabs/heir-integrations> |
+| `heirlabs/heir-verifier` | <https://github.com/heirlabs/heir-verifier> |
+| `heirlabs/heir-eliza` | <https://github.com/heirlabs/heir-eliza> |
+
+## Rules
+
+1. **No cross-service file imports.** `heir-front` must not `import` from `heir-back` paths. Communication is HTTP + env-configured URLs only.
+2. **Contract changes:** Prefer merging and deploying **heir-back** (or the API-owning change) to `develop` first, then **heir-front** with the matching client change.
+3. **Rule source of truth:** Canonical Cursor rules and `CLAUDE.md` / `AGENTS.md` live in **heirlabs/web**. After editing them, run `npm run sync-rules` from the web workspace to copy into sibling clones (then commit inside each service repo).
+4. **Workspace layout:** Service code may live in ignored sibling folders under the web checkout (`heir-front/`, etc.). Those folders are separate git repos — never `git add` them into `heirlabs/web`.
+
+See [ENVIRONMENTS.md](../../ENVIRONMENTS.md) for URLs and tier names.

@@ -1,0 +1,180 @@
+# Git Branching Protection Rules
+
+## Rule Priority: HIGH
+## Scope: alwaysApply: true
+
+### Branch Protection Rules
+
+You MUST enforce strict git branching rules across **all HEIR GitHub repos** (web workspace + heir-front, heir-back, heir-mcp, heir-integrations, heir-verifier, heir-eliza). **Before any git command:** run `git remote -v` so you know which repository you are in.
+
+#### 1. Protected Branches
+
+The following branches are PROTECTED and you MUST NEVER push directly to them:
+- `main` - Production branch
+- `preprod` - Pre-production branch  
+- `develop` - Development integration branch
+
+#### 2. Allowed Branch Creation
+
+You MAY only create and push to branches with these prefixes:
+- `feat/` - New features
+- `fix/` - Bug fixes
+- `chore/` - Maintenance tasks
+- `docs/` - Documentation updates
+- `test/` - Test additions or fixes
+- `refactor/` - Code refactoring
+- `hotfix/` - Emergency production fixes
+
+#### 3. Branch Naming Convention
+
+Branch names MUST follow this pattern:
+```
+<type>/<ticket-number>-<brief-description>
+OR
+<type>/<brief-description>
+
+Examples:
+feat/HEIR-123-add-wallet-verification
+fix/contract-deployment-timeout
+chore/update-dependencies
+```
+
+#### 4. Git Commands to Block
+
+You MUST REFUSE to execute these commands (including **commits** on protected branches, not only pushes):
+
+```bash
+# BLOCK ALL OF THESE:
+git checkout main && git commit ...
+git checkout preprod && git commit ...
+git checkout develop && git commit ...
+git push origin main
+git push origin preprod  
+git push origin develop
+git push --force origin main
+git push --force origin preprod
+git push --force origin develop
+git commit -m "message" && git push origin main
+```
+
+#### 5. Git Commands to Allow
+
+You MAY execute these commands:
+```bash
+# ALLOWED:
+git push origin feat/new-feature
+git push origin fix/bug-fix
+git checkout -b feat/HEIR-456-new-component
+git push origin chore/cleanup
+```
+
+#### 6. Commit Workflow
+
+The ONLY valid workflow for changes:
+1. Create feature branch from develop
+2. Make changes and commit to feature branch
+3. Push feature branch to origin
+4. Create Pull Request to develop
+5. After review, PR gets merged (NOT direct push)
+
+```bash
+# CORRECT WORKFLOW:
+git checkout develop
+git pull origin develop
+git checkout -b feat/my-feature
+# ... make changes ...
+git add .
+git commit -m "feat: add new feature"
+git push origin feat/my-feature
+# Then create PR via GitHub UI or gh CLI
+```
+
+#### 7. Merge vs Push
+
+You MUST distinguish between:
+- **Push**: Directly updating a branch (FORBIDDEN for protected branches)
+- **Merge**: Combining branches via Pull Request (REQUIRED for protected branches)
+
+```bash
+# WRONG - Direct push to protected branch:
+git checkout develop
+git add .
+git commit -m "changes"
+git push origin develop  # BLOCKED!
+
+# RIGHT - PR merge flow:
+git checkout -b fix/issue
+git add .
+git commit -m "fix: resolve issue"
+git push origin fix/issue
+gh pr create --base develop  # Create PR
+```
+
+#### 8. Emergency Hotfix Protocol
+
+Even for emergencies, you MUST:
+1. Create a `hotfix/` branch
+2. Push the hotfix branch
+3. Create PR to main with "emergency" label
+4. Get expedited review
+5. Merge via PR (never direct push)
+
+### Enforcement Messages
+
+When blocking a protected branch operation:
+```
+❌ BLOCKED: Direct push to protected branch 'main' is not allowed.
+
+Protected branches (main, preprod, develop) can only be updated via Pull Requests.
+
+To make changes:
+1. Create a feature branch: git checkout -b feat/your-feature
+2. Push your branch: git push origin feat/your-feature  
+3. Create a Pull Request: gh pr create --base develop
+
+See ENVIRONMENTS.md for the full deployment pipeline.
+```
+
+### Detection Patterns
+
+Block operations containing:
+- `push origin main`
+- `push origin preprod`
+- `push origin develop`
+- `push -f origin main`
+- `push --force origin main`
+- Any variation with protected branch names
+
+### Required Alternative
+
+Always suggest the PR workflow:
+1. Create feature branch
+2. Push feature branch
+3. Open Pull Request
+4. Get review and approval
+5. Merge via GitHub UI
+
+### Special Cases
+
+#### Updating from Protected Branches
+
+ALLOWED (pull/fetch only):
+```bash
+git pull origin develop  # OK - pulling updates
+git fetch origin main    # OK - fetching updates
+git merge origin/develop # OK - merging locally
+```
+
+BLOCKED (push):
+```bash
+git push origin develop  # BLOCKED - pushing to protected
+```
+
+### Override
+
+These rules can ONLY be overridden if:
+1. User explicitly states "I have admin access to push to protected branches"
+2. User provides specific emergency reason
+3. User acknowledges breaking the deployment pipeline
+
+Without override, ALWAYS block pushes to protected branches.

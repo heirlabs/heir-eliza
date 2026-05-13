@@ -1,0 +1,297 @@
+# Service Map and Configuration Reference
+
+## Rule Priority: HIGH
+## Scope: alwaysApply: true
+
+### Service Architecture
+
+This document provides the authoritative service map for HEIR.ES. Always refer to this when working with service endpoints, configurations, or inter-service communication.
+
+#### 1. Service Topology
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Frontend (React/Vite)                  │
+│  Dev: https://dev.heir.es                               │
+│  Pre: https://preprod.heir.es                           │
+│  Prod: https://www.heir.es                              │
+└─────────────────┬───────────────────────────────────────┘
+                  │
+        ┌─────────┴─────────┬───────────┬────────────┬─────────────┐
+        ▼                   ▼           ▼            ▼             ▼
+┌──────────────┐  ┌──────────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+│  API Server  │  │   MCP Server │ │Integrations│ │ Verifier │ │  Eliza   │
+│   Port:3001  │  │   Port:3002  │ │ Port:3003 │ │ Port:3004│ │ Port:3005│
+└──────────────┘  └──────────────┘ └──────────┘ └──────────┘ └──────────┘
+        │                                            │
+        ├────────────────┬───────────────────────────┤
+        ▼                ▼                           ▼
+  ┌──────────┐    ┌──────────┐               ┌──────────┐
+  │ MongoDB  │    │PostgreSQL│               │  Redis   │
+  └──────────┘    └──────────┘               └──────────┘
+```
+
+#### 2. Service Endpoints by Environment
+
+##### Development Environment
+```javascript
+const DEV_SERVICES = {
+  frontend: 'https://dev.heir.es',
+  api: 'https://api-dev.heir.es',
+  mcp: 'https://mcp-dev.heir.es',
+  integrations: 'https://int-dev.heir.es',
+  verifier: 'https://ver-dev.heir.es',
+  eliza: 'https://eliza-dev.heir.es',
+  auth: 'https://auth-dev.heir.es'
+};
+```
+
+##### Pre-Production Environment
+```javascript
+const PREPROD_SERVICES = {
+  frontend: 'https://preprod.heir.es',
+  api: 'https://api-preprod.heir.es',
+  mcp: 'https://mcp-preprod.heir.es',
+  integrations: 'https://int-preprod.heir.es',
+  verifier: 'https://ver-preprod.heir.es',
+  eliza: 'https://eliza-preprod.heir.es',
+  auth: 'https://auth-preprod.heir.es'
+};
+```
+
+##### Production Environment (Reference Only)
+```javascript
+const PROD_SERVICES = {
+  frontend: 'https://www.heir.es',
+  api: 'https://api.heir.es',
+  mcp: 'https://mcp.heir.es',
+  integrations: 'https://integrations.heir.es',
+  verifier: 'https://verifier.heir.es',
+  eliza: 'https://eliza.heir.es',
+  auth: 'https://auth.heir.es'
+};
+```
+
+#### 3. Service Responsibilities
+
+##### Frontend Service
+- **Purpose**: User interface for contract creation
+- **Tech**: React 19, Vite, TailwindCSS
+- **Key Features**:
+  - Contract creation wizard
+  - Wallet connections (WalletConnect, Wagmi)
+  - Dashboard for monitoring contracts
+  - Beneficiary management
+
+##### API Server
+- **Purpose**: Core backend services
+- **Tech**: Express 5, MongoDB, PostgreSQL
+- **Port**: 3001
+- **Key Endpoints**:
+  - `/api/health` - Health check
+  - `/api/contracts` - Contract management
+  - `/api/user` - User management
+  - `/api/auth` - Authentication
+
+##### MCP Server (heir-mcp)
+- **Purpose**: Model Context Protocol server
+- **Tech**: Node.js MCP implementation
+- **Port**: 3002
+- **Dependencies**: Connects to main API
+
+##### Integrations Service
+- **Purpose**: Third-party integrations and plugins
+- **Tech**: Node.js microservice
+- **Port**: 3003
+- **Key Features**:
+  - Plugin marketplace
+  - External service connectors
+  - Webhook management
+
+##### Credential Verifier
+- **Purpose**: Identity verification service
+- **Tech**: Node.js with separate MongoDB
+- **Port**: 3004
+- **Features**:
+  - Email verification
+  - SMS verification
+  - 2FA/MFA support
+  - WebAuthn
+
+##### Eliza Service
+- **Purpose**: AI assistant for estate planning
+- **Tech**: AI service with Redis memory
+- **Port**: 3005
+- **Integration**: OpenAI/Shroud for AI capabilities
+
+#### 4. Database Configuration
+
+##### MongoDB Clusters
+```javascript
+// Development
+MONGODB_URI_DEV = 'mongodb+srv://heir-dev.mongodb.net/heir_protocol_dev'
+VERIFIER_MONGODB_URI_DEV = 'mongodb+srv://heir-dev.mongodb.net/heir_verifier_dev'
+
+// Pre-Production  
+MONGODB_URI_PREPROD = 'mongodb+srv://heir-preprod.mongodb.net/heir_protocol_preprod'
+VERIFIER_MONGODB_URI_PREPROD = 'mongodb+srv://heir-preprod.mongodb.net/heir_verifier_preprod'
+
+// Production (DO NOT USE)
+MONGODB_URI_PROD = '[REDACTED]'
+```
+
+##### Redis Instances
+```javascript
+// Development
+REDIS_URL_DEV = 'redis://heir-dev-redis.railway.internal:6379'
+
+// Pre-Production
+REDIS_URL_PREPROD = 'redis://heir-preprod-redis.railway.internal:6379'
+```
+
+#### 5. Required Environment Variables
+
+##### Per-Service Requirements
+
+**Frontend (Vite)**:
+- All `VITE_*` variables (public, build-time)
+- No secret/runtime variables
+
+**API Server**:
+- `MONGODB_URI` - Database connection
+- `JWT_SECRET` - Authentication
+- `STRIPE_SECRET_KEY` - Payments
+- All service URLs for inter-service communication
+
+**MCP Server**:
+- `HEIR_API_URL` - Connection to main API
+- `PORT` - Service port (3002)
+
+**Integrations Service**:
+- `MONGODB_URI` - Database connection
+- `API_URL` - Main API endpoint
+- Integration-specific API keys
+
+**Credential Verifier**:
+- `VERIFIER_MONGODB_URI` - Separate database
+- `MAIN_APP_WEBHOOK_URL` - Callback to API
+- `VERIFIER_SESSION_SECRET` - Session encryption
+
+**Eliza Service**:
+- `REDIS_URL` - Memory storage
+- `ESTATE_WEBHOOK_URL` - Callback to API
+- AI provider credentials
+
+#### 6. Inter-Service Communication
+
+##### Communication Patterns
+```javascript
+// Frontend → API
+fetch(`${API_URL}/api/contracts`)
+
+// API → Verifier (Webhook)
+POST ${VERIFIER_URL}/webhook/verify
+
+// Verifier → API (Callback)
+POST ${MAIN_APP_WEBHOOK_URL}/verification-complete
+
+// MCP → API
+fetch(`${HEIR_API_URL}/api/internal/mcp`)
+
+// Eliza → API (Estate Planning)
+POST ${ESTATE_WEBHOOK_URL}/estate-analysis
+```
+
+##### Internal vs External
+
+**Internal** (Railway network):
+- Use `.railway.internal` domains
+- No TLS required (internal network)
+- Example: `api.railway.internal:3001`
+
+**External** (Public):
+- Use public domains
+- TLS required
+- Example: `https://api-dev.heir.es`
+
+#### 7. Health Check Endpoints
+
+All services implement health checks:
+
+```bash
+# Check all services (development)
+curl https://dev.heir.es/health           # Frontend
+curl https://api-dev.heir.es/api/health   # API
+curl https://mcp-dev.heir.es/health       # MCP
+curl https://int-dev.heir.es/api/health   # Integrations
+curl https://ver-dev.heir.es/health       # Verifier
+curl https://eliza-dev.heir.es/health     # Eliza
+```
+
+#### 8. Service Discovery Rules
+
+When writing code that needs service URLs:
+
+##### CORRECT Pattern
+```javascript
+// Use environment variables
+const API_URL = process.env.VITE_API_URL || 'https://api-dev.heir.es';
+const MCP_URL = process.env.MCP_SERVICE_URL || 'https://mcp-dev.heir.es';
+```
+
+##### WRONG Pattern
+```javascript
+// Never hardcode production URLs
+const API_URL = 'https://api.heir.es';  // FORBIDDEN
+const MCP_URL = 'https://mcp.heir.es';  // FORBIDDEN
+```
+
+#### 9. Configuration Files
+
+##### Key Configuration Files
+- `/ENVIRONMENTS.md` — Canonical environment reference (URLs, tiers, secrets **names**).
+- Per-service Railway config lives **inside each service repo** (e.g. `heir-back/railway.toml`, `heir-front/railway.toml`, `heir-mcp/railway.*.toml`).
+- Workspace-only: `/docker-compose.dev.yml`, `/RAILWAY_SETUP.md`.
+
+#### 10. Quick Reference Commands
+
+##### Check Service Status
+```bash
+# Development services
+curl -s https://api-dev.heir.es/api/health | jq
+curl -s https://mcp-dev.heir.es/health | jq
+
+# View Railway status (read-only)
+railway status --environment development
+```
+
+##### Local Development
+```bash
+# Start all services locally
+docker-compose -f docker-compose.dev.yml up -d
+npm run dev
+
+# Connect to local services
+API_URL=http://localhost:3001
+MCP_URL=http://localhost:3002
+```
+
+### Service Map Updates
+
+This service map is synchronized with:
+- `/ENVIRONMENTS.md` - Master environment configuration
+- Railway project configurations
+- GitHub Actions workflows
+
+Any changes to service architecture must update:
+1. This service map
+2. ENVIRONMENTS.md
+3. Relevant railway.*.toml files
+4. CI/CD workflows
+
+### Contact for Service Issues
+
+- **Frontend**: frontend-team@heir.es
+- **API/Backend**: backend-team@heir.es
+- **Infrastructure**: sre@heir.es
+- **On-Call**: Use PagerDuty for production issues

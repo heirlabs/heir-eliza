@@ -1,0 +1,41 @@
+---
+description: Exact promotion PR commands for develop → preprod → main
+globs: "**/*"
+alwaysApply: true
+---
+
+# Promotion protocol
+
+## Branch flow
+
+`feat|fix|chore|docs|test/*` → **PR** → `develop` → **PR** → `preprod` → **PR** (+ production approval) → `main`
+
+Never `git merge` protected branches locally for the purpose of shipping; use GitHub PRs so CI and branch protection apply.
+
+## PR titles (conventional)
+
+- `promote: develop -> preprod (rc-YYYY.MM.DD)`
+- `release: preprod -> main (vX.Y.Z)`
+
+## GitHub CLI examples
+
+Replace `OWNER/REPO` with the repo you are promoting (e.g. `heirlabs/heir-back`).
+
+```bash
+# After your feature merged to develop — promote develop into preprod
+gh pr create --repo OWNER/REPO --base preprod --head develop \
+  --title "promote: develop -> preprod ($(date +%Y.%m.%d))" \
+  --body-file .github/pull_request_template/promotion.md
+
+# After preprod soak — release to main (needs GitHub Environment "production" approval)
+gh pr create --repo OWNER/REPO --base main --head preprod \
+  --title "release: preprod -> main (vX.Y.Z)" \
+  --body-file .github/pull_request_template/promotion.md
+```
+
+## Refusals
+
+- Do **not** run `gh workflow run deploy-prod.yml` (or any deploy workflow) to ship; merges to protected branches trigger deploy workflows in each **service** repo.
+- Do **not** `git push origin main` / `preprod` / `develop`.
+
+If the user insists on bypassing the pipeline, refuse unless they document an explicit emergency with accountable owner (see `10-branching.mdc` override).

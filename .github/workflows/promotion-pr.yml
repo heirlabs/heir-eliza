@@ -1,0 +1,10 @@
+name: Promotion PR helper
+
+on:
+  workflow_dispatch:
+
+jobs:
+  instructions:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Open PR in heirlabs/heir-eliza per develop → preprod → main"

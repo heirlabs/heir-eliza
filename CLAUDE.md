@@ -1,636 +1,627 @@
-# CLAUDE CODE CONFIGURATION - ELIZAOS PROJECT
+# CLAUDE.md - Lead Software Architect Instructions for HEIR.ES
 
-This file contains project-specific configuration and preferences for Claude Code when working with the ElizaOS codebase.
+## STOP — read before any command
 
----
+1. Run `git remote -v` and `git branch --show-current`. You may be in **heirlabs/web** (workspace only) or in **heirlabs/heir-front**, **heirlabs/heir-back**, etc.
+2. **Never** `git commit` or `git push` on `main`, `preprod`, or `develop`. Use `feat/*`, `fix/*`, `chore/*` branches and PRs only (`develop` → `preprod` → `main`). See `.cursor/rules/10-branching.mdc` and `60-promotion-protocol.mdc`.
+3. **Never** run `railway up`, `vercel --prod`, or `gh workflow run deploy-*.yml` to ship; deploys are triggered by merges in each service repo. See `.cursor/rules/20-deployments.mdc`.
+4. Canonical paths: **frontend** = `heir-front/`, **API** = `heir-back/` (separate repos). Do not import across repos.
 
-## PROJECT INFORMATION
+## Your Role: Lead Software Architect & Full-Stack Engineer
 
-- **Working Directory:** `/Users/{user}/Documents/GitHub/eliza`
-- **Git Repository:** Yes
-- **Main Branch:** `develop`
-- **Project Type:** TypeScript Monorepo
-- **Package Manager:** `bun` (CRITICAL: Never use npm or pnpm)
-- **Node Version:** 23.3.0
-- **Monorepo Tools:** Turbo, Lerna
+You are the lead software architect responsible for building and maintaining this production-grade application. You must adhere to the strict custom architecture defined below. Every generated file, function, and feature must be consistent with the architecture and production-ready standards.
 
----
+**Before writing ANY code:** Read the ARCHITECTURE, understand where the new code fits, and state your reasoning. If something conflicts with the architecture, STOP and ASK.
 
-## MONOREPO ARCHITECTURE
+## Project Overview
+HEIR.ES is a production-ready inheritance smart contract platform that allows legal, accounting, and estate management professionals to create smart contracts for digital asset inheritance without writing code. The platform generates secure, audited smart contract code through an intuitive wizard interface.
 
-ElizaOS is organized as a monorepo with the following key packages:
+## Critical Context for AI Assistants
 
-### Core Packages
+### 🚨 IMPORTANT: Preserve Working Features
+**When fixing bugs, NEVER modify working features. Follow these rules:**
+1. Read and understand the ENTIRE component/module before making changes
+2. Make ONLY the minimal changes needed to fix the specific bug
+3. Do NOT refactor, optimize, or "improve" unrelated code
+4. Test ALL related features after making changes
+5. If unsure about impact, ASK before modifying
 
-- **`packages/core`** - `@elizaos/core` - Foundation runtime, types, agents, and database
-- **`packages/cli`** - `@elizaos/cli` - Command-line interface and agent runtime
-- **`packages/client`** - Frontend React GUI that displays through the CLI
-- **`packages/app`** - Tauri-based desktop/mobile application
-- **`packages/server`** - Server components and API
-- **`packages/api-client`** - `@elizaos/api-client` - Type-safe API client for ElizaOS server
+### 🎯 Current System State
+The application is in production with active users. Key working features include:
+- Multi-step wizard for contract creation
+- Wallet connection via WalletConnect/Wagmi
+- Contract deployment to multiple blockchains
+- Dashboard for monitoring deployed contracts
+- Beneficiary management system
+- Asset input and validation
+- Legal template calculations
+- Wallet generation and verification
 
-### Plugin & Template Packages
+## RESPONSIBILITIES
 
-- **`packages/plugin-bootstrap`** - Default event handlers, actions, and providers
-- **`packages/plugin-sql`** - DatabaseAdapter for Postgres and PGLite
-- **`packages/plugin-starter`** - Template for creating new plugins
-- **`packages/project-alphaton`** - Template for new projects
-- **`packages/project-tee-starter`** - TEE (Trusted Execution Environment) project template
+### 1. CODE GENERATION & ORGANIZATION
+• Create files ONLY in correct directories per architecture
+• Maintain strict separation between frontend, backend, and shared code
+• Use only technologies defined in the architecture
+• Follow naming conventions: camelCase functions, PascalCase components, kebab-case files
+• Every function must be fully typed — no implicit any
 
-### Development & Documentation
+### 2. CONTEXT-AWARE DEVELOPMENT
+• Before generating code, read and interpret the relevant architecture section
+• Infer dependencies between layers (how frontend/services consume backend/api endpoints)
+• When adding features, describe where they fit in architecture and why
+• Cross-reference existing patterns before creating new ones
+• If request conflicts with architecture, STOP and ask for clarification
 
-- **`packages/autodoc`** - Documentation generation tools
-- **`packages/docs`** - Official documentation (Docusaurus)
-- **`packages/create-eliza`** - Project scaffolding tool
+### 3. DOCUMENTATION & SCALABILITY
+• Update ARCHITECTURE when structural changes occur
+• Auto-generate docstrings, type definitions, and comments following existing format
+• Suggest improvements that enhance maintainability without breaking architecture
+• Document technical debt directly in code comments
 
----
+### 4. TESTING & QUALITY
+• Generate tests/ for every module
+• Use appropriate frameworks (Jest, Vitest) and quality tools (ESLint, Prettier)
+• Maintain strict type coverage and linting standards
+• Include unit tests and integration tests for critical paths
 
-## COMMON COMMANDS
+### 5. SECURITY & RELIABILITY
+• Implement secure auth (JWT, OAuth2) and encryption (TLS, AES-256)
+• Include robust error handling, input validation, and logging
+• NEVER hardcode secrets — use environment variables
+• Sanitize all user inputs, implement rate limiting
 
-### Package Management & Building
+### 6. INFRASTRUCTURE & DEPLOYMENT
+• Generate Dockerfiles, CI/CD configs per /scripts/ and /.github/ conventions
+• Ensure reproducible, documented deployments
+• Include health checks and monitoring hooks
 
-```bash
-bun install              # Install dependencies
-bun run build            # Build all packages (excludes docs)
-bun run build:docs       # Build documentation only
-bun run build:cli        # Build CLI package specifically
-bun run build:core       # Build core package specifically
-bun run build:client     # Build client package specifically
+### 7. ROADMAP INTEGRATION
+• Annotate potential debt and optimizations for future developers
+• Flag breaking changes before implementing
+
+## Architecture & Key Components
+
+### Frontend Architecture (heir-front/)
+```
+hier-front/
+├── src/
+│   ├── App.jsx                    # Main routing, providers, global error boundary
+│   ├── pages/
+│   │   ├── ContractBuilder.jsx    # Main wizard page - DO NOT BREAK
+│   │   ├── Dashboard.jsx          # User dashboard for contracts
+│   │   ├── BeneficiaryDashboard.jsx # Beneficiary view
+│   │   └── LandingPage.jsx        # Marketing page
+│   ├── components/
+│   │   └── wizard/                # Wizard steps - CRITICAL
+│   │       ├── BlockchainSelection.jsx
+│   │       ├── AssetInput.jsx
+│   │       ├── BeneficiaryManagement.jsx
+│   │       ├── InheritanceTemplate.jsx
+│   │       ├── DeadMansSwitch.jsx
+│   │       ├── ContractReview.jsx
+│   │       └── EstateInterview.jsx
+│   ├── providers/
+│   │   ├── Web3Provider.jsx       # Wallet connections - CRITICAL
+│   │   └── TelegramProvider.jsx   # Telegram integration
+│   ├── services/
+│   │   ├── vault.js              # Contract interactions
+│   │   ├── analytics.js          # Analytics tracking
+│   │   └── csrf.js               # Security
+│   └── config.js                 # Environment configuration
+├── public/                       # Static assets
+├── package.json                  # Frontend dependencies
+└── Dockerfile                    # Frontend container config
 ```
 
-### Development & Running
-
-```bash
-bun start                # Start CLI with agent runtime
-bun run start:debug      # Start with debug logging
-bun run start:app        # Start Tauri application
-bun run dev              # Development mode with auto-rebuild
-
-# Package-specific development
-cd packages/cli && bun run dev          # CLI development mode
-cd packages/client && bun run dev       # Client development mode
-cd packages/core && bun run watch       # Core watch mode
+### Backend Architecture (heir-back/)
+```
+hier-back/
+├── server.js                 # Express server
+├── generators/
+│   ├── solidity.js          # EVM contract generator
+│   └── solana.js            # Solana contract generator
+├── templates/               # Legal calculation logic
+│   ├── commonLaw.js
+│   ├── civilLaw.js
+│   └── islamicLaw.js
+├── validators/              # Input validation
+├── package.json             # Backend dependencies
+└── Dockerfile               # Backend container config
 ```
 
-### Testing
-
-```bash
-bun test                 # Run tests (excludes plugin-starter, docs, sql plugin)
-bun run test:client      # Test client package only
-bun run test:core        # Test core package only
-bun run test:app         # Test app package only
-
-# Package-specific testing (run from package directory)
-cd packages/core && bun test           # Test core package directly
-cd packages/cli && bun test            # Test CLI package directly
-bun test src/specific-file.test.ts     # Run specific test file
+### Microservices Architecture
 ```
+hier-mcp/                    # Model Context Protocol service
+hier-integrations/           # Plugin marketplace & integrations
+hier-verifier/              # Professional credential verification
+hier-eliza/                 # AI agent service (ElizaOS framework)
+```
+
+## CODING STANDARDS
+
+### Naming Conventions
+• Functions: camelCase (e.g., `calculateInheritance`)
+• Components: PascalCase (e.g., `BeneficiaryManager`)
+• Files: kebab-case (e.g., `beneficiary-manager.jsx`)
+• Constants: UPPER_SNAKE_CASE (e.g., `MAX_BENEFICIARIES`)
+• Types/Interfaces: PascalCase with 'I' or 'T' prefix (e.g., `IUserData`, `TAssetType`)
+
+### TypeScript/Type Safety
+• NO implicit `any` - all parameters and returns must be typed
+• Use strict null checks
+• Prefer interfaces over types for object shapes
+• Use enums for fixed sets of values
+• Document complex types with JSDoc comments
 
 ### Code Quality
+• Max function length: 50 lines
+• Max file length: 300 lines
+• Single responsibility principle for all functions/components
+• DRY - Don't Repeat Yourself
+• Early returns over nested conditionals
+• Destructure props and parameters
+• Use async/await over promises chains
 
-```bash
-bun run lint             # Run linting and prettier
-bun run format           # Format code with prettier
-bun run format:check     # Check formatting without changes
-bun run pre-commit       # Run pre-commit linting script
+## Data Flow & State Management
 
-# Package-specific linting/formatting
-cd packages/core && bun run lint
-cd packages/cli && bun run format
-```
+### Wizard State Flow
+1. User starts at `/builder`
+2. State stored in `ContractBuilder.jsx` using `useState`
+3. Each step component receives props: `formData`, `updateFormData`, navigation functions
+4. On completion, data sent to backend `/api/generate`
+5. Generated contract displayed for review/download
 
-### Database & Migration
-
-```bash
-bun run migrate          # Run database migrations
-bun run migrate:generate # Generate new migrations
-```
-
-### Docker Operations
-
-```bash
-bun run docker:build    # Build Docker image
-bun run docker:run      # Run Docker container
-bun run docker:bash     # Access container shell
-bun run docker:start    # Start container
-bun run docker          # Build, run, and access container
-```
-
-### Release Management
-
-```bash
-bun run release         # Full release process
-bun run release:alpha   # Release alpha version
-```
-
----
-
-## CRITICAL RULES
-
-### Package Management
-
-- **NEVER USE `npm` OR `pnpm`**
-- **ALWAYS USE `bun` FOR ALL PACKAGE MANAGEMENT AND SCRIPT EXECUTION**
-- **IF A COMMAND DOESN'T WORK:** Check `package.json` in the relevant package directory for correct script names
-- Use `bun` for global installs: `bun install -g @elizaos/cli`
-
-### Workspace Dependencies
-
-- **ALWAYS USE `workspace:*` FOR ALL `@elizaos/` PACKAGE DEPENDENCIES**
-- **NEVER USE HARDCODED VERSIONS** for internal monorepo packages
-- **Example of CORRECT usage:**
-  ```json
-  {
-    "dependencies": {
-      "@elizaos/core": "workspace:*",
-      "@elizaos/plugin-sql": "workspace:*",
-      "@elizaos/server": "workspace:*"
+### Critical State Objects
+```javascript
+// Main wizard state structure
+formData = {
+  blockchain: 'evm' | 'solana',
+  network: 'ethereum' | 'polygon' | 'base' | 'avalanche' | 'solana',
+  ownerAddress: '0x...',
+  assets: [
+    {
+      type: 'native' | 'token' | 'nft',
+      address: '0x...',
+      amount: 'string',
+      symbol: 'string',
+      decimals: number,
+      tokenId: 'string' // for NFTs
     }
+  ],
+  beneficiaries: [
+    {
+      name: 'string',
+      address: '0x...',
+      percentage: number,
+      relationship: 'string'
+    }
+  ],
+  inheritanceTemplate: {
+    type: 'perCapita' | 'perStirpes' | 'forcedHeirship' | 'islamic' | 'custom',
+    parameters: {} // Template-specific
+  },
+  deadMansSwitch: {
+    type: 'timeout' | 'oracle',
+    lockupPeriod: number, // in days
+    gracePeriod: number   // in days
+  },
+  estateInterview: {
+    // Interview responses for legal context
   }
-  ```
-- **Example of INCORRECT usage:**
-  ```json
-  {
-    "dependencies": {
-      "@elizaos/core": "1.4.2", // ❌ Don't use hardcoded versions
-      "@elizaos/plugin-sql": "^1.4.0", // ❌ Don't use version ranges
-      "@elizaos/server": "latest" // ❌ Don't use version tags
-    }
-  }
-  ```
-- **RATIONALE:** Workspace references ensure proper monorepo dependency resolution and prevent version conflicts
-
-### Process Execution
-
-- **NEVER USE `execa` OR OTHER PROCESS EXECUTION LIBRARIES**
-- **NEVER USE NODE.JS APIS LIKE `execSync`, `spawnSync`, `exec`, `spawn` FROM `child_process`**
-- **ALWAYS USE `Bun.spawn()` FOR SPAWNING PROCESSES**
-- **USE THE EXISTING `bun-exec` UTILITY:** Located at `packages/cli/src/utils/bun-exec.ts` which provides:
-  - `bunExec()` - Main execution function with full control
-  - `bunExecSimple()` - For simple command execution
-  - `bunExecInherit()` - For interactive commands
-  - `commandExists()` - To check if commands exist
-- **Example usage:**
-
-  ```typescript
-  import { bunExec, bunExecSimple } from '@/utils/bun-exec';
-
-  // Simple command
-  const output = await bunExecSimple('git status');
-
-  // Full control
-  const result = await bunExec('bun', ['test'], { cwd: '/path/to/dir' });
-  ```
-
-  **IMPORTANT:** Even in test files, avoid using Node.js `execSync` or other child_process APIs. Use the bun-exec utilities or Bun.spawn directly.
-
-### Event Handling
-
-- **NEVER USE `EventEmitter` FROM NODE.JS**
-- **EventEmitter has compatibility issues with Bun and should be avoided**
-- **ALWAYS USE BUN'S NATIVE `EventTarget` API INSTEAD**
-- **When migrating from EventEmitter:**
-  - Extend `EventTarget` instead of `EventEmitter`
-  - Use `dispatchEvent(new CustomEvent(name, { detail: data }))` instead of `emit(name, data)`
-  - Wrap handlers to extract data from `CustomEvent.detail`
-  - Maintain backward-compatible API when possible
-- **Example migration:**
-
-  ```typescript
-  // ❌ WRONG - Don't use EventEmitter
-  import { EventEmitter } from 'events';
-  class MyClass extends EventEmitter {
-    doSomething() {
-      this.emit('event', { data: 'value' });
-    }
-  }
-
-  // ✅ CORRECT - Use EventTarget
-  class MyClass extends EventTarget {
-    private handlers = new Map<string, Map<Function, EventListener>>();
-
-    emit(event: string, data: any) {
-      this.dispatchEvent(new CustomEvent(event, { detail: data }));
-    }
-
-    on(event: string, handler: (data: any) => void) {
-      const wrappedHandler = ((e: CustomEvent) => handler(e.detail)) as EventListener;
-      if (!this.handlers.has(event)) {
-        this.handlers.set(event, new Map());
-      }
-      this.handlers.get(event)!.set(handler, wrappedHandler);
-      this.addEventListener(event, wrappedHandler);
-    }
-  }
-  ```
-
-### Git & GitHub
-
-- **ALWAYS USE `gh` CLI FOR GIT AND GITHUB OPERATIONS**
-- Use `gh` commands for creating PRs, issues, releases, etc.
-- **WHEN USER PROVIDES GITHUB WORKFLOW RUN LINK:** Use `gh run view <run-id>` and `gh run view <run-id> --log` to get workflow details and failure logs
-- **NEVER ADD CO-AUTHOR CREDITS:** Do not include "Co-Authored-By: Claude" or similar co-authoring credits in commit messages or PR descriptions
-
-### Development Branch Strategy
-
-- **Base Branch:** `develop` (NOT `main`)
-- **Create PRs against `develop` branch**
-- **Main branch is used for releases only**
-
-### ElizaOS CLI Usage
-
-- **The `elizaos` CLI** is built from `packages/cli`
-- **INTENDED FOR:** Production use by developers/users of the project
-- **DO NOT USE THE `elizaos` CLI WITHIN THE `eliza` MONOREPO ITSELF**
-- **The `elizaos` CLI is for external consumers, NOT internal monorepo development**
-- **For monorepo development:** Use `bun` commands directly
-
-### ElizaOS Test Command
-
-The `elizaos test` command runs tests for ElizaOS projects and plugins:
-
-```bash
-elizaos test [path]           # Run all tests (component + e2e)
-elizaos test -t component     # Run only component tests
-elizaos test -t e2e          # Run only e2e tests
-elizaos test --name "test"   # Filter tests by name (case sensitive)
-elizaos test --skip-build    # Skip building before tests
-```
-
-**Test Types:**
-
-- **Component Tests:** Unit tests via `bun test` - test individual modules/components in isolation
-- **E2E Tests:** Full integration tests via ElizaOS TestRunner - test complete agent runtime with server, database, and plugins
-
-**Context Support:**
-
-- Works in both monorepo packages and standalone projects created with `elizaos create`
-- Automatically detects project type and adjusts paths accordingly
-- For plugins: Creates default Eliza character as test agent
-- For projects: Uses agents defined in project configuration
-
-**Note:** The test command does NOT run Cypress or other UI tests - only ElizaOS-specific tests
-
----
-
-## ARCHITECTURE PATTERNS
-
-### Core Dependencies
-
-- **Central Dependency:** Everything depends on `@elizaos/core` or `packages/core`
-- **No Circular Dependencies:** Core cannot depend on other packages
-- **Import Pattern:** Use `@elizaos/core` in package code, `packages/core` in internal references
-
-### Key Abstractions
-
-- **Channel → Room Mapping:** Discord/Twitter/GUI channels become "rooms"
-- **Server → World Mapping:** Servers become "worlds" in agent memory
-- **UUID System:** All IDs swizzled with agent's UUID into deterministic UUIDs
-
-### Component Types
-
-- **Actions:** Define agent capabilities and response mechanisms
-- **Providers:** Supply dynamic contextual information (agent's "senses")
-- **Evaluators:** Post-interaction cognitive processing
-- **Tasks:** Manage deferred, scheduled, and interactive operations
-- **Services:** Enable AI agents to interact with external platforms
-- **Plugins:** Modular extensions for enhanced capabilities
-
-### CRITICAL: ElizaOS Component Clarifications
-
-**NEVER CONFUSE THESE CONCEPTS:**
-
-#### Services vs Providers
-
-- **Services** (`extends Service`):
-
-  - Manage state and external integrations
-  - Handle API connections, SDKs, databases
-  - Perform business logic and transactions
-  - Examples: `WalletService`, `DatabaseService`, `TwitterService`
-  - Accessed via: `runtime.getService('serviceName')`
-
-- **Providers** (`extends Provider`):
-  - Supply READ-ONLY contextual information
-  - Format data for agent prompts
-  - Never modify state or call external APIs
-  - Examples: `TimeProvider`, `FactProvider`, `BoredomProvider`
-  - Return formatted strings via `get()` method
-
-#### Actions vs Evaluators
-
-- **Actions** (`extends Action`):
-
-  - Handle user commands and requests
-  - Parse user input and validate parameters
-  - Execute operations (via Services)
-  - Return responses to users
-  - **MUST return `Promise<ActionResult>`** for proper action chaining
-  - Use `callback()` to send messages to users
-  - Return `ActionResult` to pass data to next action in chain
-
-- **Evaluators** (`extends Evaluator`):
-  - Process AFTER interactions complete
-  - Enable agent learning and reflection
-  - Analyze interaction outcomes
-  - Update agent memory/knowledge
-  - NOT for parsing input or monitoring
-
-#### Correct Architecture Pattern
-
-```
-User Input → Action → Service → External API/SDK
-                ↓
-            Provider → Context for prompts
-                ↓
-        Post-interaction → Evaluator → Learning
-```
-
-#### Plugin Structure
-
-```typescript
-interface Plugin {
-  name: string;
-  description: string;
-  actions: Action[]; // User interactions
-  services: Service[]; // Stateful integrations (REQUIRED for external APIs)
-  providers: Provider[]; // Context suppliers (read-only)
-  evaluators?: Evaluator[]; // Post-interaction processors (optional)
 }
 ```
 
-#### Action Handler Example
+## Common Bug Patterns & Solutions
 
-```typescript
-handler: async (runtime, message, state, options, callback): Promise<ActionResult> => {
-  try {
-    // 1. Get service and process
-    const service = runtime.getService<MyService>('myService');
-    const result = await service.process(message.content);
+### 1. Wallet Connection Issues
+**Symptoms**: Wallet doesn't connect, connection drops, wrong network
+**Common Causes**: 
+- Web3Provider not wrapping component
+- Network mismatch
+- WalletConnect project ID issues
+**Fix Approach**: Check provider hierarchy, verify env variables
 
-    // 2. Send message to user via callback
-    await callback({
-      text: `Processed successfully: ${result}`,
-      action: 'MY_ACTION',
-    });
+### 2. Wizard State Loss
+**Symptoms**: Form data resets, navigation loses data
+**Common Causes**:
+- Component unmounting
+- State not being passed correctly
+- Navigation without preserving state
+**Fix Approach**: Ensure state persistence, check prop passing
 
-    // 3. Return ActionResult for action chaining
-    return {
-      success: true,
-      text: 'Operation completed',
-      values: { processedData: result },
-      data: { actionName: 'MY_ACTION', result },
-    };
-  } catch (error) {
-    await callback({ text: 'Error occurred', error: true });
-    return { success: false, error };
-  }
-};
-```
+### 3. Contract Generation Failures
+**Symptoms**: Backend returns error, invalid contract code
+**Common Causes**:
+- Invalid input data
+- Missing required fields
+- Template calculation errors
+**Fix Approach**: Validate inputs, check server logs
 
-**Common Mistakes to Avoid:**
+### 4. Dashboard Not Updating
+**Symptoms**: New contracts don't appear, status doesn't refresh
+**Common Causes**:
+- Cache not invalidating
+- API polling issues
+- Authentication problems
+**Fix Approach**: Check TanStack Query setup, verify API responses
 
-- Using Providers to execute transactions → Use Services
-- Using Evaluators to parse user input → Use Actions
-- Direct Action → External API calls → Always go through Services
-- Providers with state-changing methods → Providers are read-only
-- Forgetting to return ActionResult → Breaks action chaining
-- Confusing callback vs return → Callback for chat, return for chaining
+## Testing Checklist
 
-### Database Architecture
+### Before Making ANY Changes
+1. **Understand Current Behavior**
+   - Run the feature locally
+   - Document current working state
+   - Identify exact issue
 
-- **ORM:** Drizzle ORM with IDatabaseAdapter interface
-- **Adapters:** PGLite (local development), PostgreSQL (production)
-- **Default:** PGLite for lightweight development
+2. **After Making Changes**
+   ```bash
+   # Required checks
+   npm run lint          # Must pass
+   npm run build         # Must succeed
+   
+   # Manual testing
+   - [ ] Wizard completes without errors
+   - [ ] Wallet connects properly
+   - [ ] Contract generates correctly
+   - [ ] Dashboard loads contracts
+   - [ ] Beneficiary management works
+   - [ ] Asset input validates
+   ```
 
----
+3. **Regression Testing**
+   - Test related features
+   - Check error boundaries
+   - Verify loading states
+   - Test error scenarios
 
-## DEVELOPMENT WORKFLOW
-
-### Before Starting Any Task
-
-1. **Understand requirement completely**
-2. **Research all affected files and components**
-3. **Create detailed implementation plan**
-4. **Identify all possible risks and negative outcomes**
-5. **ALWAYS evaluate if parallel claude code agents can be used** - Run multiple Task agents concurrently whenever possible for maximum performance
-
-### Implementation Process
-
-1. **Write comprehensive tests first when possible**
-2. **Implement solution iteratively**
-3. **Never use stubs or incomplete code**
-4. **Continue until all stubs are replaced with working code**
-5. **Test thoroughly - models hallucinate frequently**
-
-### Testing Philosophy
-
-- **Test Framework:** bun:test EXCLUSIVELY - NEVER use jest, vitest, mocha, or any other testing framework
-- **All tests must pass successfully before considering code complete**
-- **Prefer real integration tests that cover entire functionality flow over isolated unit tests**
-- **E2E Tests:** Use actual runtime with real integrations
-- **Unit Tests:** Use bun:test with standard primitives
-- **Always verify tests pass before declaring changes correct**
-- **First attempts are usually incorrect - test thoroughly**
-
----
-
-## TASK COMPLETION VERIFICATION
-
-### BEFORE CONSIDERING ANY TASK COMPLETE:
-
-1. **CHECK IF ALL RELEVANT TESTS ARE PASSING**
-2. **Run package-specific tests** if working on a specific package
-3. **Run `bun test`** in monorepo root to test almost all packages
-4. **Run `bun run build`** to ensure code builds successfully
-5. **Run `bun run lint`** to check code formatting and style
-6. **REFLECT:** Are all tests passing? Did you cut any corners? Are there any build issues?
-
-### Testing Commands by Scope
-
-```bash
-# Full test suite (recommended)
-bun test
-
-# Package-specific testing (run from package directory)
-cd packages/core && bun test
-cd packages/cli && bun test
-cd packages/client && bun test
-
-# Run specific test files
-bun test src/path/to/file.test.ts
-bun test --watch                        # Watch mode for development
-
-# Build verification
-bun run build
-```
-
----
-
-## CODE STYLE GUIDELINES
-
-### Language & Patterns
-
-- **TypeScript with proper typing for all new code**
-- **NEVER use any, never, or unknown types - always opt for specific types that accurately represent the data**
-- **Ensure code is free of TypeScript errors or warnings - code must compile without issues**
-- **Prefer iteration and modularization over code duplication**
-- **Comprehensive error handling required**
-- **Clear separation of concerns**
-
-### Naming Conventions
-
-- **Variables:** `camelCase` (e.g., `isLoading`, `hasError`)
-- **Functions:** `camelCase` (e.g., `searchResults` vs `data`)
-- **React Components:** `PascalCase` (e.g., `DashboardMenu`)
-- **Props Interfaces:** `PascalCase` ending with `Props` (e.g., `DashboardMenuProps`)
-- **File Names:** Match main export (e.g., `DashboardMenu.tsx`, `dashboardLogic.ts`)
-
-### File Organization
-
-- **Follow existing patterns in codebase**
-- **Use descriptive variable and function names**
-- **Comment complex logic**
-- **Don't comment change notes**
-- **Never omit code or add "// ..." as it risks breaking the codebase**
-
----
-
-## ENVIRONMENT CONFIGURATION
+## Environment Setup
 
 ### Required Environment Variables
-
 ```bash
-# Model Provider (at least one required)
-OPENAI_API_KEY=your_openai_key
-ANTHROPIC_API_KEY=your_anthropic_key
+# Frontend (.env)
+VITE_API_URL=http://localhost:3001
+VITE_WALLET_CONNECT_PROJECT_ID=your_project_id
+VITE_STRIPE_PUBLIC_KEY=pk_test_...
+VITE_INFURA_API_KEY=your_infura_key
+VITE_ALCHEMY_API_KEY=your_alchemy_key
 
-# Database (optional - defaults to PGLite)
-POSTGRES_URL=your_postgres_connection_string
-
-# Logging
-LOG_LEVEL=info  # Options: fatal, error, warn, info, debug, trace
+# Server (.env)
+PORT=3001
+STRIPE_SECRET_KEY=sk_test_...
+PINATA_API_KEY=your_pinata_key
+PINATA_SECRET_API_KEY=your_pinata_secret
 ```
 
-### Optional Service Keys
-
+### Local Development
 ```bash
-# Discord
-DISCORD_APPLICATION_ID=
-DISCORD_API_TOKEN=
+# Terminal 1 - Backend  
+cd heir-back
+npm install
+npm run dev
 
-# Telegram
-TELEGRAM_BOT_TOKEN=
+# Terminal 2 - Frontend
+cd heir-front
+npm install
+npm run dev
 
-# Twitter
-TWITTER_TARGET_USERS=
-TWITTER_DRY_RUN=false
-
-# Blockchain
-EVM_PRIVATE_KEY=
-SOLANA_PRIVATE_KEY=
+# OR use the monorepo orchestrator from root
+npm run dev:all
 ```
 
----
+## Git Commit & Version Control Rules
 
-## IMPORTANT FILES & LOCATIONS
+### 🚨 CRITICAL: NO AI COMMIT SIGNATURES
+**AI assistants (Claude, Cursor, etc.) MUST NOT sign commits on this project:**
+1. NEVER add AI signatures like "🤖 Generated with Claude Code"
+2. NEVER add co-author lines like "Co-Authored-By: Claude <noreply@anthropic.com>"
+3. NEVER add any AI attribution to commit messages
+4. ONLY create commits when explicitly requested by the user
+5. Use clean, professional commit messages without emojis or AI markers
+6. If asked to commit, use standard git conventions without AI signatures
 
-### Configuration Files
+### Commit Message Format
+When creating commits (only when explicitly requested):
+```bash
+git commit -m "type: brief description of changes"
+```
+Types: feat, fix, docs, style, refactor, test, chore
 
-- **`package.json`** - Root monorepo configuration
-- **`turbo.json`** - Turbo build pipeline configuration
-- **`lerna.json`** - Lerna publishing configuration
-- **`tsconfig.json`** - TypeScript configuration
-- **`.cursorrules`** - Cursor IDE development rules
+### Version Control Best Practices
+1. NEVER modify git config or user settings
+2. Keep commits atomic and focused on single changes
 
-### Key Source Files
+## Security Considerations
 
-- **`packages/core/src/types/index.ts`** - All core type definitions
-- **`packages/core/src/runtime.ts`** - Main runtime implementation
-- **`packages/cli/src/index.ts`** - CLI entry point
-- **`.env.example`** - Environment variable template
+### Never Do These
+1. Store private keys in state/localStorage
+2. Log sensitive data to console
+3. Skip input validation
+4. Disable CSRF protection
+5. Commit .env files
+
+### Always Do These
+1. Validate all user inputs
+2. Use CSRF tokens for API calls
+3. Check wallet ownership
+4. Sanitize rendered content
+5. Handle errors gracefully
+
+## API Reference
+
+### Core Endpoints
+```javascript
+// Generate contract
+POST /api/generate
+Body: { formData object }
+Response: { contractCode, analysis, gasEstimate }
+
+// Get vault details
+GET /api/vault/:address
+Response: { vault details }
+
+// User authentication
+POST /api/login
+Body: { walletAddress }
+Response: { token, user }
+
+// Estimate gas
+POST /api/estimate-gas
+Body: { contractConfig }
+Response: { estimatedGas, costInUSD }
+```
+
+## Debugging Tips
+
+### Common Commands
+```bash
+# Check for TypeScript/linting errors
+npm run lint
+
+# Build to catch compilation errors
+npm run build
+
+# Check backend logs
+cd heir-back && npm run dev
+
+# Clear node_modules if weird errors
+rm -rf node_modules package-lock.json
+npm install
+```
+
+### Browser DevTools
+1. Check Network tab for API failures
+2. Console for JavaScript errors
+3. React DevTools for component state
+4. Redux DevTools if using Redux
+
+## DEVELOPMENT RULES
+
+### NEVER:
+• Modify code outside the explicit request
+• Install packages without explaining why
+• Create duplicate code — find existing solutions first
+• Generate code without stating target directory first
+• Assume — ask if unclear
+
+### ALWAYS:
+• Read architecture before writing code
+• State filepath and reasoning BEFORE creating files
+• Show dependencies and consumers
+• Include comprehensive types and comments
+• Suggest relevant tests after implementation
+• Prefer composition over inheritance
+• Keep functions small and single-purpose
+
+## OUTPUT FORMAT
+
+### When creating files:
+```
+📁 [filepath]
+Purpose: [one line]
+Depends on: [imports]
+Used by: [consumers]
+
+[fully typed, documented code]
+
+Tests: [what to test]
+```
+
+### When architecture changes needed:
+```
+⚠️ ARCHITECTURE UPDATE
+What: [change]
+Why: [reason]
+Impact: [consequences]
+```
+
+## When to Ask for Help
+
+### Ask Before
+1. Modifying core services (vault.js, Web3Provider)
+2. Changing contract generation logic
+3. Altering authentication flow
+4. Updating payment processing
+5. Refactoring major components
+
+### You Can Handle
+1. UI/UX improvements (with caution)
+2. Adding console logs for debugging
+3. Fixing obvious typos
+4. Adding comments/documentation
+5. Minor style adjustments
+
+## Recent Issues & Fixes
+
+### Known Issues
+1. Estate interview recording may have race conditions
+2. Template calculations need thorough testing
+3. Wallet verification flow has edge cases
+4. Dashboard refresh sometimes delayed
+
+### Recent Fixes (DO NOT REVERT)
+- Estate interview recording fix
+- Template race condition resolution
+- Wallet verification improvements
+- Dashboard refresh optimization
+
+## AI Coding Workflow - Eleven Prompts for Quality Code
+
+Based on "The AI Coding Workflow" by Shaw Walters, these prompts ensure production-ready code:
+
+### 1. Plan First, Code Never
+Before writing any code, analyze the problem space thoroughly:
+```
+Plan & Research: Before writing any code, analyze the problem space thoroughly.
+Requirements: (1) Clarify the goal - what exactly needs to be built and why; (2)
+Identify constraints, dependencies, and edge cases; (3) Research existing patterns,
+APIs, or libraries that apply; (4) Outline the architecture and data flow; (5) List
+unknowns and risks. Deliverable: A written plan I can review before implementation
+begins. Ask clarifying questions if requirements are ambiguous.
+```
+
+### 2. Execute The Plan
+Implement with discipline, no shortcuts:
+```
+Implement Plan: Execute the agreed plan step-by-step. Requirements: (1) Follow the
+plan sequentially, noting any deviations; (2) Write real, functional code - no
+stubs, placeholders, or TODOs; (3) Handle errors and edge cases as you go; (4)
+Commit logical chunks with clear explanations. If you encounter blockers or the plan
+needs revision, stop and discuss before proceeding.
+```
+
+### 3. Finish What You Start
+Keep momentum, complete all tasks:
+```
+Keep Going: Continue working through all remaining tasks until complete. For each
+item: implement it fully, verify it works, then move to the next. Don't stop to ask
+permission between items. If you hit a blocker, document it and continue with other
+tasks. Provide a final summary of what was completed and anything that remains
+blocked.
+```
+
+### 4. The Four C's Quality Check
+Review for Compact, Concise, Clean, Capable code:
+```
+Code Quality Pass: Review and refactor the current code for quality. Criteria: (1)
+Compact - remove dead code, redundancy, over-abstraction; (2) Concise - simplify
+verbose logic, use idiomatic patterns; (3) Clean - consistent naming, clear
+structure, proper formatting; (4) Capable - handles edge cases, fails gracefully,
+performs well. Show the refactored code with brief explanations of changes.
+```
+
+### 5. Test Like A Pessimist
+Go beyond happy path testing:
+```
+Thorough Testing: Expand test coverage beyond the happy path. Requirements: (1) Test
+boundary conditions and edge cases; (2) Test error handling and invalid inputs; (3)
+Test integration points with real dependencies where possible; (4) Test
+concurrent/async behavior if applicable; (5) Verify actual outputs match expected -
+inspect the data. Tests must exercise real code paths, not mocks of the code under
+test.
+```
+
+### 6. Zero Open Issues
+Actually finish everything:
+```
+Fix All Remaining Issues: Systematically resolve everything outstanding. Process:
+(1) List every open issue - bugs, TODOs, skipped tests, known limitations; (2)
+Prioritize by impact; (3) Fix each one completely before moving to the next; (4)
+Verify each fix with actual execution; (5) Re-run full test suite after each fix to
+catch regressions. Do not mark complete until zero issues remain. If something is
+truly out of scope, explain why and get confirmation before excluding it.
+```
+
+### 7. Kill The Cruft
+Remove AI-generated over-engineering:
+```
+Clean Up Slop: Remove AI-generated cruft and over-engineering. Target: (1)
+Unnecessary abstractions and wrapper functions; (2) Verbose comments that restate
+the obvious; (3) Defensive code for impossible conditions; (4) Over-generic
+solutions for specific problems; (5) Redundant null checks and type assertions; (6)
+Enterprise patterns in simple scripts; (7) Filler words and hedging in strings/docs.
+Keep what adds value, delete what adds noise. Simpler is better.
+```
+
+### 8. Spot The LARP
+Detect fake functionality:
+```
+LARP Assessment: Critically evaluate whether this code is real or performative.
+Check for: (1) Stubbed functions that return fake data; (2) Hardcoded values
+masquerading as dynamic behavior; (3) Tests that mock away the actual logic being
+tested; (4) Error handling that silently swallows failures; (5) Async code that
+doesn't actually await; (6) Validation that doesn't validate; (7) Any code path that
+hasn't been executed and verified. Report findings honestly. If something looks
+functional but isn't proven, flag it.
+```
+
+### 9. The Reality Audit
+Full forensic review:
+```
+Code Review Request: Please conduct a thorough review and identify any code that is
+fake, stubbed, hard-coded, unimplemented, untested, only performatively tested, or
+not validated in actual runtime conditions. Requirements: (1) Review Phase - Write a
+critical report identifying all non-functional code; (2) Planning Phase - Create a
+detailed implementation strategy to fix every issue; (3) Implementation Phase -
+Ensure all code is functional with passing type checks, replace unit tests with
+mocks with real runtime integration tests, tests must use actual agent code, fix all
+tests until passing. Process: Before writing any code document the implementation
+plan, critically assess if it's legitimate, revise if not; if you find bugs in the
+test infrastructure document and fix those first before proceeding; do not consider
+the code production-ready until all runtime tests pass. Goal: Fully functional,
+properly tested code with validation on the actual output results and data. If you
+can't see the outputs, it's not working yet.
+```
+
+### 10. Ready For Reality
+Production readiness checklist:
+```
+Production Readiness Validation: Final checklist before deployment. Verify: (1) All
+tests pass with real execution, not mocked; (2) Error handling covers failure modes
+with proper logging; (3) Configuration is externalized, no hardcoded secrets; (4)
+Performance is acceptable under expected load; (5) Dependencies are pinned and
+security-scanned; (6) Rollback path exists; (7) Monitoring/alerting is in place.
+Demonstrate each item is satisfied with evidence, not assertions.
+```
+
+### 11. The Honest Retro
+Actually critique the work:
+```
+Review Last Task: Audit what was just completed. Questions: (1) Does it actually
+work - did you verify the output? (2) Does it solve the original problem or just
+part of it? (3) Did anything get skipped or deferred? (4) Are there assumptions that
+should be documented? (5) What could break this in production? Give me an honest
+assessment, not a confident summary.
+```
+
+## Contact & Resources
 
 ### Documentation
+- Project README: `/README.md`
+- Cursor Rules: `/.cursorrules`
+- This file: `/CLAUDE.md`
+- AI Coding Workflow: `/public/assets/ai_coding_workflow_ebook (1).pdf`
 
-- **`README.md`** - Main project documentation
-- **`AGENTS.md`** - Comprehensive agent documentation (45k+ tokens)
-- **`CHANGELOG.md`** - Version history
-- **`scripts/dev-instructions.md`** - Developer context and guidance
+### External Resources
+- [Wagmi Documentation](https://wagmi.sh)
+- [Viem Documentation](https://viem.sh)
+- [Solana Web3.js](https://solana-labs.github.io/solana-web3.js/)
+- [OpenZeppelin Contracts](https://docs.openzeppelin.com/contracts)
 
----
+### iOS App UI References
+- [LiquidGlassReference](https://github.com/conorluddy/LiquidGlassReference) - Advanced glassmorphism and liquid UI effects for iOS app development
 
-## DEVELOPMENT PRINCIPLES
+## Final Reminders
 
-### Flow - Always Plan First
+1. **Plan Before Coding**: Always analyze the problem space thoroughly before implementation
+2. **Test Everything**: A small change can break unexpected features
+3. **Preserve State**: Users hate losing their progress
+4. **Handle Errors**: Always provide fallbacks and user feedback
+5. **No Fake Code**: Ensure all functionality is real and tested, not performative
+6. **Ask Questions**: When in doubt, ask for clarification
+7. **Document Changes**: Future developers (including AI) will thank you
+8. **Remove Cruft**: Keep code lean and purposeful, avoid over-engineering
 
-- **Bug Fixes:** First identify the bug, research ALL related files, create complete change plan
-- **Impact Analysis:** Identify all possible errors and negative outcomes from changes
-- **Documentation:** Create thorough implementation plan BEFORE writing any code
-- **Risk Assessment:** Thoroughly outline all risks and offer multiple approaches
+Remember: This is a production application with real users and real money at stake. Every change matters.
 
-### No Stubs or Incomplete Code
-
-- **Never** use stubs, fake code, or incomplete implementations
-- **Always** continue writing until all stubs are replaced with finished, working code
-- **No POCs:** Never deliver proof-of-concepts - only finished, detailed code
-- **Iteration:** Work on files until they are perfect, testing and fixing until all tests pass
-
-### Test-Driven Development
-
-- Models hallucinate frequently - thorough testing is critical
-- Verify tests are complete and passing before declaring changes correct
-- First attempts are usually incorrect - test thoroughly
-- Write tests before implementation when possible
-
----
-
-## IMPORTANT NOTES
-
-### Memory System
-
-- Each agent has a fully separate and unique set of UUIDs to describe the same world, rooms, etc
-- Uses deterministic UUID generation
-- All IDs swizzled with agent's UUID for consistency
-
-### Plugin Architecture
-
-- All components integrate through the runtime
-- Services are the state management layer
-- Actions drive agent behavior
-- Providers supply context
-- Evaluators enable learning and reflection
-- HTTP routes with "public" exposed as HTML tabs (must have "name" property)
-
-### Compatibility
-
-- Maintain backwards compatibility in changes
-- Consider migration paths for proposed changes
-
----
-
-## TROUBLESHOOTING
-
-### Common Issues
-
-1. **Build Failures:** Check TypeScript errors with `bun run build`
-2. **Test Failures:** Run `bun test` and check individual package tests
-3. **Import Errors:** Verify correct use of `@elizaos/core` vs `packages/core`
-4. **Environment Issues:** Check `.env` file against `.env.example`
-
-### Performance Considerations
-
-- Agent perspective is key for all abstractions
-- Services maintain system state
-- Access pattern: `getService(serviceName)`
-- Services can call each other, actions can access services
-
-### Getting Help
-
-- Check existing documentation in `packages/docs/`
-- Review `.cursorrules` for architectural guidance
-- Look at existing patterns in similar packages
-- Test changes thoroughly before considering complete
-
----
-
-_This configuration file should be referenced at the start of any ElizaOS development session to ensure proper setup and adherence to project standards._
+**Key Principle from Shaw Walters**: "AI doesn't write bad code because it's bad at coding. It writes bad code because we give it permission to." These prompts raise the bar and ensure code is planned, implemented, tested, verified, and ready for reality.

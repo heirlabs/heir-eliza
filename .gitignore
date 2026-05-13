@@ -113,10 +113,9 @@ packages/autodoc/text_objects/*
 /env
 **elizadb**
 **.eliza**
-.cursor
+# .cursor and .github were ignored globally; we track .github/workflows and .cursor/rules (synced from heirlabs/web).
 .cursorrules
 .claude
-.github
 .husky
 
 # UI Test related files

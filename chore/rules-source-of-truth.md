@@ -1,0 +1,1 @@
+Canonical Cursor rules and `CLAUDE.md` / `AGENTS.md` / `.github/copilot-instructions.md` are maintained in **heirlabs/web**. After updates there, run `npm run sync-rules` from the web workspace and commit the copies in this repository.

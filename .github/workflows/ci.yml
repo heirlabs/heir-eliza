@@ -1,0 +1,19 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, preprod, main]
+  push:
+    branches: [develop, preprod, main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Smoke
+        run: |
+          test -f package.json
+          echo "heir-eliza uses bun/turbo locally; enable full CI when runners support Node 23 + bun."

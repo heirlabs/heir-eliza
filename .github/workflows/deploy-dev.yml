@@ -1,0 +1,20 @@
+name: Deploy to Development
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+env:
+  RAILWAY_SERVICE: heir-eliza
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install -g @railway/cli
+      - env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_DEV }}
+        run: railway up --service "${{ env.RAILWAY_SERVICE }}" --environment development --detach

@@ -1,0 +1,246 @@
+# Deployment Protection Rules
+
+## Rule Priority: CRITICAL
+## Scope: alwaysApply: true
+
+### Deployment Restrictions
+
+You MUST NOT perform any direct deployment operations. All deployments must go through the established CI/CD pipeline via Pull Requests.
+
+#### 1. Forbidden Deployment Commands
+
+You MUST REFUSE to execute ANY of these commands:
+
+##### Railway Deployments
+```bash
+# BLOCK ALL OF THESE:
+railway up
+railway up --environment production
+railway up --environment preprod
+railway up --service api
+railway deploy
+railway run --environment production
+railway link
+railway environment production
+```
+
+##### Vercel Deployments
+```bash
+# BLOCK ALL OF THESE:
+vercel
+vercel --prod
+vercel deploy
+vercel --force
+npm run deploy
+```
+
+##### GitHub Actions
+```bash
+# BLOCK ALL OF THESE:
+gh workflow run deploy-prod.yml
+gh workflow run deploy-preprod.yml
+gh workflow run -f environment=production
+act -j deploy-production
+```
+
+##### Container/Kubernetes
+```bash
+# BLOCK ALL OF THESE:
+docker push
+kubectl apply -f
+kubectl set image
+helm install
+helm upgrade
+```
+
+#### 2. The ONLY Approved Deployment Method
+
+Deployments happen AUTOMATICALLY via this pipeline:
+1. Developer pushes to feature branch
+2. Creates PR to `develop`
+3. PR merged to `develop` → Auto-deploys to development
+4. Promotion PR from `develop` to `preprod`
+5. PR merged to `preprod` → Auto-deploys to pre-production
+6. Promotion PR from `preprod` to `main`
+7. PR merged to `main` → Deploys to production (with approval)
+
+#### 3. What You CAN Do
+
+##### Local Development
+```bash
+# ALLOWED - Local only:
+npm run dev
+npm start
+docker-compose up -d
+npm run build
+npm test
+```
+
+##### Creating Promotion PRs
+```bash
+# ALLOWED - Promotion workflow:
+./scripts/promote.sh develop preprod
+gh pr create --base develop
+gh pr view
+gh pr merge --auto
+```
+
+##### Checking Deployment Status
+```bash
+# ALLOWED - Read-only:
+railway status
+railway logs
+gh workflow list
+gh run list
+curl https://dev.heir.es/health
+```
+
+#### 4. Environment Variable Management
+
+##### FORBIDDEN
+```bash
+# BLOCK ALL OF THESE:
+railway variables set JWT_SECRET=xxx
+railway secrets add STRIPE_KEY
+export MONGODB_URI="prod-connection-string"
+echo "PROD_API_KEY=xxx" >> .env
+```
+
+##### ALLOWED
+```bash
+# Only for local development:
+cp .env.example .env.local
+echo "TEST_VAR=dev-value" >> .env.local
+export NODE_ENV=development
+```
+
+#### 5. Database Migrations
+
+##### FORBIDDEN
+```bash
+# BLOCK ALL OF THESE:
+npm run migrate:prod
+railway run --environment production "npm run migrate"
+node migrate.js --env=production
+```
+
+##### ALLOWED
+```bash
+# Development only:
+npm run migrate:dev
+npm run db:seed:dev
+npm run db:reset:dev  # Dev only!
+```
+
+#### 6. Emergency Procedures
+
+Even in emergencies, you MUST NOT deploy directly. Instead:
+
+1. Create a `hotfix/` branch
+2. Use emergency PR workflow
+3. Tag PR with "emergency" label
+4. Get expedited review
+5. Merge to trigger deployment
+
+For rollbacks:
+```bash
+# ALLOWED - Rollback script:
+./scripts/emergency-rollback.sh development  # Dev only
+# Production rollback requires team approval
+```
+
+### Enforcement Messages
+
+When blocking deployment commands:
+```
+❌ BLOCKED: Direct deployment commands are not allowed.
+
+All deployments must go through the PR-based pipeline:
+- feat/* → develop → preprod → main
+
+To deploy your changes:
+1. Push to your feature branch
+2. Create a PR to develop
+3. After merge, it auto-deploys to development
+4. Use './scripts/promote.sh' for promotion to higher environments
+
+Direct deployments bypass:
+- Code review
+- Automated testing  
+- Deployment approvals
+- Audit trail
+- Rollback capability
+
+See ENVIRONMENTS.md for the deployment pipeline.
+```
+
+### Detection Patterns
+
+Block any command containing:
+- `railway up`
+- `railway deploy`
+- `vercel`
+- `--environment production`
+- `--environment preprod`
+- `workflow run deploy`
+- `kubectl apply`
+- `docker push`
+
+### Railway CLI Special Cases
+
+##### NEVER Allow
+```bash
+railway up          # Deployment
+railway link        # Project linking
+railway environment # Environment switching
+```
+
+##### May Allow (Read-Only)
+```bash
+railway status     # Check status
+railway logs       # View logs
+railway variables  # List vars (not set)
+```
+
+### GitHub CLI Special Cases
+
+##### NEVER Allow
+```bash
+gh workflow run deploy-*.yml  # Trigger deployment
+gh api -X POST /deployments   # Create deployment
+```
+
+##### May Allow
+```bash
+gh workflow list              # List workflows
+gh run list                   # List runs
+gh pr create                  # Create PR
+./scripts/promote.sh          # Promotion PR
+```
+
+### Override Protocol
+
+Deployment commands can ONLY be executed if:
+1. User explicitly states "I am authorized to deploy to production"
+2. User confirms they are following the emergency deployment procedure
+3. User provides the deployment authorization ticket number
+4. User acknowledges they are breaking the CI/CD pipeline
+
+Without ALL of these overrides, REFUSE all deployment commands.
+
+### Alternative Suggestions
+
+When deployment is blocked, suggest:
+```
+To get your changes deployed:
+1. Push to feature branch: git push origin feat/your-feature
+2. Create PR: gh pr create --base develop
+3. Get review and merge
+4. Changes auto-deploy to development
+5. For production: ./scripts/promote.sh develop preprod
+
+Need to check deployment status?
+- View workflows: gh workflow list
+- Check health: curl https://dev.heir.es/health
+- View logs: railway logs (read-only)
+```
