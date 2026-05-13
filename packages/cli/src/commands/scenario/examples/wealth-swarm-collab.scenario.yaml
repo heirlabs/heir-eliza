@@ -1,0 +1,40 @@
+name: 'Wealth Swarm Collaboration Test'
+description: 'Checks that the lead advisor coordinates tax and legal considerations.'
+
+plugins:
+  - name: '@elizaos/plugin-bootstrap'
+    enabled: true
+  - name: '@elizaos/plugin-heir'
+    enabled: true
+  - name: '@elizaos/plugin-openai'
+    enabled: true
+
+environment:
+  type: local
+
+run:
+  - name: 'Cross-disciplinary coordination'
+    input: 'I want to pass a business and real estate portfolio to my children while minimizing taxes. Coordinate legal and tax specialists.'
+
+    conversation:
+      max_turns: 4
+      user_simulator:
+        persona: 'business owner planning succession'
+        objective: 'receive a coordinated estate and tax planning overview'
+        temperature: 0.6
+        style: 'concise and professional'
+        constraints:
+          - 'Ask for clarity if needed'
+          - 'Confirm next steps'
+
+      termination_conditions:
+        - type: 'agent_provides_solution'
+          keywords: ['estate attorney', 'tax', 'succession', 'next steps']
+
+      final_evaluations:
+        - type: 'llm_judge'
+          prompt: 'Did the agent describe coordination between legal and tax roles and ask clarifying questions?'
+          expected: 'yes'
+
+judgment:
+  strategy: all_pass

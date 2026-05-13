@@ -1,0 +1,40 @@
+name: 'Wealth Swarm Single-Agent Test'
+description: 'Validates a lead advisor response for estate planning intake.'
+
+plugins:
+  - name: '@elizaos/plugin-bootstrap'
+    enabled: true
+  - name: '@elizaos/plugin-heir'
+    enabled: true
+  - name: '@elizaos/plugin-openai'
+    enabled: true
+
+environment:
+  type: local
+
+run:
+  - name: 'Estate planning intake'
+    input: 'I need to set up a will and trust for my family in California with crypto assets.'
+
+    conversation:
+      max_turns: 3
+      user_simulator:
+        persona: 'high-net-worth individual with digital assets'
+        objective: 'understand what information is needed to start estate planning'
+        temperature: 0.5
+        style: 'direct and businesslike'
+        constraints:
+          - 'Provide details when asked'
+          - 'Stay focused on legal planning and asset types'
+
+      termination_conditions:
+        - type: 'agent_provides_solution'
+          keywords: ['questions', 'jurisdiction', 'beneficiaries', 'assets']
+
+      final_evaluations:
+        - type: 'llm_judge'
+          prompt: 'Did the agent ask relevant intake questions and mention professional advice?'
+          expected: 'yes'
+
+judgment:
+  strategy: all_pass

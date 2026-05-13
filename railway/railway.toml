@@ -1,0 +1,45 @@
+# Railway Configuration for ElizaOS Alpha-TON
+# https://docs.railway.app/reference/config-as-code
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+# Watch patterns for automatic rebuilds
+watchPatterns = [
+  "packages/**",
+  "Dockerfile", 
+  "package.json",
+  "turbo.json",
+  "*.ts"
+]
+
+[deploy]
+# Start command (uses Dockerfile CMD if not specified)
+startCommand = "bun run start"
+
+# Health check configuration
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+
+# Restart policy
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
+
+# Number of replicas (1 for standard, increase for scaling)
+numReplicas = 1
+
+# Runtime configuration
+[deploy.runtime]
+# Memory limit (optional, Railway auto-scales)
+# memoryLimit = "2Gi"
+
+# Environment variables (set in Railway dashboard for secrets)
+[deploy.env]
+NODE_ENV = "production"
+PORT = "3000"
+# MONGODB_URI - Set in Railway dashboard (link to MongoDB service)
+# MONGODB_DB_NAME - Set in Railway dashboard
+# OPENAI_API_KEY - Set in Railway dashboard
+# Other secrets should be configured in Railway dashboard
+

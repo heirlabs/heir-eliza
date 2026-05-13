@@ -1,0 +1,28 @@
+{
+  "name": "@elizaos/plugin-legal",
+  "version": "1.0.0",
+  "description": "ElizaOS plugin for legal education, bar exam preparation, and estate law guidance",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@elizaos/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "elizaos",
+    "plugin",
+    "legal",
+    "bar-exam",
+    "estate-law",
+    "contracts",
+    "torts",
+    "evidence"
+  ]
+}

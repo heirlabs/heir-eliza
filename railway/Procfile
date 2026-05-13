@@ -1,0 +1,9 @@
+# Procfile for Railway/Heroku deployment
+# This is an alternative to Dockerfile deployment
+
+# Main web process
+web: bun run start
+
+# MongoDB agent process (alternative entry point)
+# mongodb-agent: bun run start-mongodb-agent.ts
+

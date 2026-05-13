@@ -1,0 +1,78 @@
+# Railway configuration for eliza-service in development environment
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
+numReplicas = 1
+
+[env]
+NODE_ENV = "development"
+PORT = "3005"
+
+# Development tier identification
+RAILWAY_ENVIRONMENT = "development"
+SERVICE_NAME = "eliza-service"
+
+# Service URLs
+ELIZA_BASE_URL = "https://eliza-dev.heir.es"
+ELIZA_SERVER_URL_MYHEIR = "https://eliza-dev.heir.es"
+HEIR_API_URL = "https://api-dev.heir.es"
+
+# Eliza AI configuration
+ELIZA_MODEL = "gpt-3.5-turbo"
+ELIZA_MAX_TOKENS = "2000"
+ELIZA_TEMPERATURE = "0.7"
+ELIZA_TOP_P = "0.9"
+ELIZA_FREQUENCY_PENALTY = "0.0"
+ELIZA_PRESENCE_PENALTY = "0.0"
+
+# Character configuration
+DEFAULT_CHARACTER = "heir-assistant"
+CHARACTER_CACHE_TTL = "3600"
+MAX_ACTIVE_CHARACTERS = "50"
+
+# Session management
+SESSION_TIMEOUT = "1800000"
+MAX_SESSIONS_PER_USER = "5"
+SESSION_CLEANUP_INTERVAL = "300000"
+
+# Memory and context
+MEMORY_TYPE = "redis"
+REDIS_URL = "${{REDIS_URL_DEV}}"
+CONTEXT_WINDOW_SIZE = "10"
+MAX_MEMORY_ENTRIES = "100"
+
+# Rate limiting
+RATE_LIMIT_WINDOW = "60000"
+RATE_LIMIT_MAX_REQUESTS = "100"
+RATE_LIMIT_MAX_TOKENS_PER_MINUTE = "10000"
+
+# Webhook configuration for estate planning
+ESTATE_WEBHOOK_URL = "https://api-dev.heir.es/api/webhooks/eliza"
+WEBHOOK_TIMEOUT = "15000"
+WEBHOOK_RETRY_ATTEMPTS = "2"
+
+# Logging
+LOG_LEVEL = "debug"
+LOG_FORMAT = "json"
+LOG_CONVERSATIONS = "true"
+
+# Security
+ENABLE_CONTENT_FILTERING = "true"
+ENABLE_PII_DETECTION = "false"
+MAX_INPUT_LENGTH = "4000"
+
+# Performance
+ENABLE_RESPONSE_STREAMING = "true"
+STREAM_CHUNK_SIZE = "256"
+RESPONSE_TIMEOUT = "30000"
+
+# Development features
+ENABLE_DEBUG_MODE = "true"
+ENABLE_MOCK_RESPONSES = "false"
+ENABLE_PERFORMANCE_MONITORING = "true"

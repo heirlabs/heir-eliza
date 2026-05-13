@@ -1,0 +1,7 @@
+{
+  "name": "@elizaos/config",
+  "version": "1.6.5-alpha.3",
+  "private": true,
+  "description": "Shared configuration files for ElizaOS packages",
+  "type": "module"
+}

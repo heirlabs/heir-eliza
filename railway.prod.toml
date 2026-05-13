@@ -1,0 +1,44 @@
+# Railway configuration for heir-eliza service in production environment
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+numReplicas = 2
+
+[env]
+NODE_ENV = "production"
+PORT = "3005"
+
+# Production tier identification
+RAILWAY_ENVIRONMENT = "production"
+SERVICE_NAME = "heir-eliza"
+
+# API connections
+HEIR_API_URL = "https://api.heir.es"
+MONGODB_URI = "mongodb+srv://heir-production.mongodb.net"
+
+# Eliza configuration
+ELIZA_AGENT_ID = "heir-estate-advisor"
+ELIZA_WORLD_ID = "heir-estate-planning"
+
+# AI model configuration
+OPENAI_API_KEY = "sk-..."
+ANTHROPIC_API_KEY = "sk-ant-..."
+
+# Character and behavior settings
+ELIZA_CHARACTER_FILE = "characters/heir-estate-advisor.json"
+ELIZA_PERSONALITY = "professional-estate-advisor"
+ELIZA_MAX_MEMORY_ITEMS = "1000"
+
+# Logging
+LOG_LEVEL = "warn"
+LOG_FORMAT = "json"
+
+# Feature flags
+ENABLE_DEBUG_ENDPOINTS = "false"
+ENABLE_EXPERIMENTAL_FEATURES = "false"

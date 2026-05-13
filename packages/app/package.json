@@ -1,0 +1,12 @@
+{
+  "name": "@elizaos/app",
+  "version": "1.4.4",
+  "private": true,
+  "description": "ElizaOS Desktop Application (Tauri)",
+  "scripts": {
+    "dev": "echo 'App dev not configured'",
+    "build": "echo 'App build not configured'",
+    "start": "echo 'App start not configured'"
+  }
+}
+
