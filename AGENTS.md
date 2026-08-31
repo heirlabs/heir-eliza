@@ -131,23 +131,21 @@ git push origin develop
 
 ## Environment & Deployment Rules
 
-### Three-Tier Environment System
-The codebase operates with strict environment isolation:
+### Railway Project: intuitive-growth
+**Single Railway project** (`intuitive-growth`, ID `fbb590e5-8788-4a00-92c9-4c9968019f66`) with two environments:
 
-1. **Development** (`heir-dev`)
-   - URL: https://dev.heir.es
+> **NEVER** target `heir-prod`, `heir-preprod`, `heir-dev`, or project IDs `ec952114-…` / `4ada5aca-…` / `547771d2-…` — those are legacy abandoned projects.
+
+1. **Development** (environment: `dev`)
+   - API service: `heir-dev-api`
    - Branch: `develop`
    - Auto-deploys on push
 
-2. **Pre-Production** (`heir-preprod`)
-   - URL: https://preprod.heir.es
-   - Branch: `preprod`
-   - Auto-deploys on PR merge from `develop`
-
-3. **Production** (`heir-prod`)
-   - URL: https://www.heir.es
+2. **Production** (environment: `production`)
+   - API service: `intuitive-growth` → https://api.heir.es
+   - Web service: `web` → https://heir.es
    - Branch: `main`
-   - Deploys on PR merge from `preprod` with approval
+   - Deploys on PR merge with approval
 
 ### Deployment Restrictions
 **AI agents MUST NOT execute deployment commands:**
