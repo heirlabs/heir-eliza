@@ -113,7 +113,9 @@ packages/autodoc/text_objects/*
 /env
 **elizadb**
 **.eliza**
-.cursor
+.cursor/settings.json
+.cursor/tasks.json
+.cursor/mcp.json
 .cursorrules
 .claude
 .github

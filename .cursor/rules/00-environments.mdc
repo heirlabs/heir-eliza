@@ -1,0 +1,132 @@
+# Environment Protection Rules
+
+## Rule Priority: CRITICAL
+## Scope: alwaysApply: true
+
+### Core Environment Rules
+
+You are working on the HEIR.ES codebase which operates in a three-tier application tier system. You MUST follow these environment protection rules at all times:
+
+#### 1. Environment Separation
+
+The application has THREE tiers (URL / branch / app config) but **only ONE Railway project**:
+
+| App tier | URL | Branch |
+|---|---|---|
+| **dev** | https://dev.heir.es | `develop` |
+| **preprod** | https://preprod.heir.es | `preprod` |
+| **prod** | https://www.heir.es | `main` |
+
+**Railway project (single, canonical):** `intuitive-growth`
+**Project ID:** `fbb590e5-8788-4a00-92c9-4c9968019f66`
+
+Railway *environments* inside that one project:
+- `production` — serves live traffic (prod API service: `intuitive-growth`, prod web service: `web`)
+- `dev` — serves non-prod traffic (non-prod API service: `heir-dev-api`)
+
+> **`heir-dev`, `heir-preprod`, `heir-prod` are application-tier labels — they are NOT Railway project names.**
+> **NEVER** target legacy Railway projects `heir-prod`, `heir-preprod`, `heir-dev`, or
+> project IDs `ec952114-…`, `4ada5aca-…`, `547771d2-…` — those are abandoned.
+> **NEVER** use services `heir-back-api` or `heir-front-web` for live traffic.
+
+#### 2. NEVER Point to Production
+
+You MUST NEVER:
+- Use production URLs in code (api.heir.es, www.heir.es)
+- Connect to production databases
+- Use production API keys or secrets
+- Read or modify production data
+- Execute scripts against production services
+
+When writing or modifying code:
+- Always use environment variables for URLs
+- Default to development environment
+- Use test/sandbox modes for third-party services
+
+#### 3. Environment Detection
+
+Check for these environment indicators:
+```javascript
+// CORRECT - Environment aware
+const API_URL = process.env.VITE_API_URL || 'https://api-dev.heir.es';
+const ENV = process.env.RAILWAY_ENVIRONMENT || 'development';
+
+// WRONG - Hardcoded production
+const API_URL = 'https://api.heir.es';  // NEVER DO THIS
+```
+
+#### 4. Database Safety
+
+FORBIDDEN patterns in connection strings:
+- `heir-prod.mongodb.net` — Production Atlas cluster (**Note:** this is a MongoDB Atlas cluster
+  hostname, not a Railway project name. Atlas cluster names are independent of Railway.)
+- `heir_protocol` without suffix — Production database
+- Any connection string without explicit environment
+
+REQUIRED patterns:
+- `heir-dev.mongodb.net` for development
+- `heir_protocol_dev` for development database
+- Always use environment-specific credentials
+
+#### 5. Secret Management
+
+Environment variables to NEVER use directly:
+- Any variable without `_DEV`, `_PREPROD`, or `_PROD` suffix
+- Production secrets (containing `PROD` or `LIVE`)
+- Stripe live keys (starting with `sk_live_` or `pk_live_`)
+
+#### 6. Service Discovery
+
+Always use environment-specific service URLs:
+```javascript
+// Development services
+const SERVICES = {
+  api: 'https://api-dev.heir.es',
+  mcp: 'https://mcp-dev.heir.es',
+  integrations: 'https://int-dev.heir.es',
+  verifier: 'https://ver-dev.heir.es',
+  eliza: 'https://eliza-dev.heir.es'
+};
+```
+
+### Enforcement Actions
+
+If you detect any of these violations, you MUST:
+1. **STOP** immediately
+2. **REFUSE** to execute the operation
+3. **WARN** the user about the potential production impact
+4. **SUGGEST** the correct environment-aware approach
+
+### Example Violations to Block
+
+```bash
+# BLOCK THESE:
+mongodump --uri="mongodb+srv://prod-user@heir-prod.mongodb.net"  # Production Atlas DB
+curl -X POST https://api.heir.es/api/contracts                  # Production API
+railway up --project ec952114-...                               # Legacy abandoned project
+railway up --project 4ada5aca-...                               # Legacy abandoned project
+railway up --project 547771d2-...                               # Legacy abandoned project
+railway up   # Missing --project fbb590e5-8788-4a00-92c9-4c9968019f66 — ambiguous/unsafe
+```
+
+```bash
+# CORRECT — always target the canonical project explicitly:
+railway up --project fbb590e5-8788-4a00-92c9-4c9968019f66 --environment dev
+```
+
+### Required Reading
+
+Before ANY operation, check:
+- Current branch: Must be feature branch, not main/preprod/develop
+- Environment variables: Must use development values
+- Target URLs: Must point to dev/local only
+- Database connections: Must use dev cluster
+
+### Override Protocol
+
+These rules can ONLY be overridden if:
+1. User explicitly states "I authorize production access"
+2. User provides specific production credentials
+3. User acknowledges the risks in writing
+
+Without explicit override, assume ALL operations target development environment.
